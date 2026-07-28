@@ -1,0 +1,6 @@
+{
+  "name": "Community Service Management",
+  "description": "An intuitive platform for organizing community service events, tracking volunteer hours, registering for service opportunities, and managing community impact.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

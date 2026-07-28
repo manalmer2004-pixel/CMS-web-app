@@ -1,0 +1,290 @@
+import { ServiceEvent, HoursLog, Badge, Announcement, CommunityFeedback, UserProfile } from "./types";
+
+const DEFAULT_PROFILE_AVATAR = "https://ui-avatars.com/api/?name=Volunteer&rounded=true&background=10b981&color=ffffff&size=250";
+
+export const INITIAL_USER: UserProfile = {
+  id: "u-1",
+  name: "Manal Mer",
+  email: "manalmer2004@gmail.com",
+  avatar: DEFAULT_PROFILE_AVATAR,
+  role: "volunteer",
+  phone: "+1 (555) 432-8711",
+  skills: ["Tutoring", "Event Organization", "First Aid", "Graphic Design"],
+  bio: "Passionate about environment preservation, teaching kids, and lending a helping hand in the local animal shelters. Always eager to connect with like-minded community members!",
+  emergencyContact: "Sarah Mer (Mother) - +1 (555) 432-8700",
+  joinedDate: "2025-09-15",
+  totalHours: 32,
+  completedEventsCount: 6,
+  level: 3,
+  badgeIds: ["b-1", "b-3"],
+};
+
+export const INITIAL_COORDINATOR: UserProfile = {
+  id: "u-coord",
+  name: "Director Marcus",
+  email: "marcus.director@community.org",
+  avatar: DEFAULT_PROFILE_AVATAR,
+  role: "coordinator",
+  phone: "+1 (555) 987-6543",
+  skills: ["Program Coordination", "Crisis Response", "Public Relations"],
+  bio: "Community Service Director organizing local initiatives since 2020. Dedicated to creating high-impact service opportunities for volunteers of all ages.",
+  emergencyContact: "Office - Ext 402",
+  joinedDate: "2020-01-10",
+  totalHours: 0,
+  completedEventsCount: 0,
+  level: 10,
+  badgeIds: [],
+};
+
+export const INITIAL_EVENTS: ServiceEvent[] = [
+  {
+    id: "e-1",
+    title: "Riverside Cleanup Challenge",
+    description: "Join our green team for the monthly waterfront restoration drive! We'll be cleaning litter, cataloging marine debris, and placing native soil binders. Safety vests, trash grabbers, and snacks are fully provided. Great family-friendly outdoor activity!",
+    category: "Environment",
+    date: "2026-07-18",
+    startTime: "09:00",
+    endTime: "13:00",
+    location: "Riverside Park - North Pavillion",
+    maxVolunteers: 40,
+    signedUpVolunteers: ["manalmer2004@gmail.com", "volunteer2@example.com", "volunteer3@example.com"],
+    completed: false,
+    organizerEmail: "marcus.director@community.org",
+    image: "https://images.unsplash.com/photo-1618477388954-7852f32655ec?auto=format&fit=crop&q=80&w=600",
+    impactMetric: "A cleaner shoreline, protecting local river otters and wild waterfowl."
+  },
+  {
+    id: "e-2",
+    title: "Weekend Food Bank Food Pack",
+    description: "Lend a hand in sorting, labeling, and packing essential grocery supplies for low-income families and shelters. Volunteers will work in small teams on quick assembly lines to pack over 300 emergency boxes. Requires standing for 2-3 hours.",
+    category: "Hunger Relief",
+    date: "2026-07-15",
+    startTime: "13:00",
+    endTime: "16:00",
+    location: "Second Harvest Warehouse (Bay 4)",
+    maxVolunteers: 20,
+    signedUpVolunteers: ["volunteer4@example.com", "volunteer5@example.com"],
+    completed: false,
+    organizerEmail: "marcus.director@community.org",
+    image: "https://images.unsplash.com/photo-1593113630400-ea4288922497?auto=format&fit=crop&q=80&w=600",
+    impactMetric: "300+ grocery boxes prepped for same-week home delivery."
+  },
+  {
+    id: "e-3",
+    title: "Senior Citizens Mobile Tech Club",
+    description: "Empower local seniors! Bring your patience and friendly attitude to help elder residents understand how to make video calls, send messages, use security settings, and organize digital photos on their smartphones. No expert knowledge required, just basic digital literacy!",
+    category: "Elderly Care",
+    date: "2026-07-22",
+    startTime: "14:00",
+    endTime: "16:30",
+    location: "Oakwood Retirement Village Library",
+    maxVolunteers: 12,
+    signedUpVolunteers: ["manalmer2004@gmail.com", "volunteer2@example.com"],
+    completed: false,
+    organizerEmail: "marcus.director@community.org",
+    image: "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=600",
+    impactMetric: "Bridging the digital divide, helping senior citizens escape isolation."
+  },
+  {
+    id: "e-4",
+    title: "Paws & Play Shelter Dog Support",
+    description: "Help socialize and walk dogs, clean kennel runs, and organize raw-material chew toys at the local rescue center. Volunteers must complete a quick 15-minute handling briefing at start. Wear sturdy closed-toe shoes and comfortable clothes.",
+    category: "Animal Welfare",
+    date: "2026-07-11", // Past event
+    startTime: "10:00",
+    endTime: "13:00",
+    location: "County Animal Care & Shelter",
+    maxVolunteers: 15,
+    signedUpVolunteers: ["manalmer2004@gmail.com", "volunteer6@example.com", "volunteer7@example.com"],
+    completed: true,
+    organizerEmail: "marcus.director@community.org",
+    image: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&q=80&w=600",
+    impactMetric: "Ensured 15 rescue dogs received walking time, exercise, and love."
+  },
+  {
+    id: "e-5",
+    title: "Community Garden Planting & Irrigation",
+    description: "We are expanding the urban garden! Dig in with us to construct three raised beds, plant organic vegetable seeds (tomatoes, squash, and leaf greens), and build simple drip hose lines. All seeds and tools are supplied. Bring your own gloves if possible.",
+    category: "Community Development",
+    date: "2026-07-25",
+    startTime: "08:30",
+    endTime: "12:00",
+    location: "Eastside Community Garden lot",
+    maxVolunteers: 25,
+    signedUpVolunteers: [],
+    completed: false,
+    organizerEmail: "marcus.director@community.org",
+    image: "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&q=80&w=600",
+    impactMetric: "Establishes fresh, locally-grown food security for neighborhood families."
+  },
+  {
+    id: "e-6",
+    title: "After-School Creative Tutoring",
+    description: "Lead fun educational activities, guide homework worksheets, and tutor underprivileged elementary school students in basic math and writing. Help inspire confidence in young learners! A background check is waived for this initial intro session.",
+    category: "Education",
+    date: "2026-07-08", // Past event
+    startTime: "15:30",
+    endTime: "18:00",
+    location: "Hope Center Afterschool Commons",
+    maxVolunteers: 10,
+    signedUpVolunteers: ["manalmer2004@gmail.com", "volunteer4@example.com"],
+    completed: true,
+    organizerEmail: "marcus.director@community.org",
+    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=600",
+    impactMetric: "Empowered 12 children with personalized attention and homework success."
+  }
+];
+
+export const ALL_BADGES: Badge[] = [
+  {
+    id: "b-1",
+    name: "Green Guard",
+    description: "Log 10+ hours towards environmental restoration or cleanups.",
+    iconName: "Leaf",
+    color: "bg-emerald-50 text-emerald-600 border-emerald-200"
+  },
+  {
+    id: "b-2",
+    name: "Knowledge Anchor",
+    description: "Complete 3 tutoring, school support, or educational events.",
+    iconName: "BookOpen",
+    color: "bg-blue-50 text-blue-600 border-blue-200"
+  },
+  {
+    id: "b-3",
+    name: "Compassionate Heart",
+    description: "Support elderly care activities with warmth and empathy.",
+    iconName: "Heart",
+    color: "bg-rose-50 text-rose-600 border-rose-200"
+  },
+  {
+    id: "b-4",
+    name: "Fur Protector",
+    description: "Successfully complete your first animal shelter service day.",
+    iconName: "Award",
+    color: "bg-amber-50 text-amber-600 border-amber-200"
+  },
+  {
+    id: "b-5",
+    name: "Crisis Shield",
+    description: "Contribute to crisis support or emergency pantry packaging.",
+    iconName: "ShieldAlert",
+    color: "bg-violet-50 text-violet-600 border-violet-200"
+  },
+  {
+    id: "b-6",
+    name: "Community Pillar",
+    description: "Reach a milestone of 30+ total community service hours.",
+    iconName: "Milestone",
+    color: "bg-indigo-50 text-indigo-600 border-indigo-200"
+  }
+];
+
+export const INITIAL_HOURS_LOGS: HoursLog[] = [
+  {
+    id: "log-1",
+    userEmail: "manalmer2004@gmail.com",
+    userName: "Manal Mer",
+    eventId: "e-4",
+    eventTitle: "Paws & Play Shelter Dog Support",
+    date: "2026-07-11",
+    hours: 3,
+    reflection: "Loved walking the golden retrievers and cleaning up the play pens! It was very rewarding to see how happy the dogs were during our outdoor exercise time.",
+    supervisorEmail: "marcus.director@community.org",
+    status: "approved",
+    dateLogged: "2026-07-11",
+    notes: "Outstanding help! Manal was very diligent and handled dogs with care."
+  },
+  {
+    id: "log-2",
+    userEmail: "manalmer2004@gmail.com",
+    userName: "Manal Mer",
+    eventId: "e-6",
+    eventTitle: "After-School Creative Tutoring",
+    date: "2026-07-08",
+    hours: 2.5,
+    reflection: "I tutored two elementary students in algebra. They were stuck on fractions, but with colored chips they caught on quickly! Very proud of them.",
+    supervisorEmail: "marcus.director@community.org",
+    status: "approved",
+    dateLogged: "2026-07-08",
+    notes: "Children loved her! Excellent tutoring skills."
+  },
+  {
+    id: "log-3",
+    userEmail: "manalmer2004@gmail.com",
+    userName: "Manal Mer",
+    eventId: "e-other",
+    eventTitle: "Community Kitchen Food Prep",
+    date: "2026-07-03",
+    hours: 4,
+    reflection: "Chopped vegetables and cleaned tables. Helped prep around 120 salads.",
+    supervisorEmail: "dining.manager@community.org",
+    status: "approved",
+    dateLogged: "2026-07-03"
+  },
+  {
+    id: "log-4",
+    userEmail: "manalmer2004@gmail.com",
+    userName: "Manal Mer",
+    eventId: "e-custom-1",
+    eventTitle: "Independent Botanical Garden Cataloging",
+    date: "2026-07-12",
+    hours: 4.5,
+    reflection: "Assisted the botanical coordinator with tagging seasonal roses, recording soil pH readings, and typing up label drafts for local visitors.",
+    supervisorEmail: "marcus.director@community.org",
+    status: "pending",
+    dateLogged: "2026-07-12"
+  }
+];
+
+export const INITIAL_ANNOUNCEMENTS: Announcement[] = [
+  {
+    id: "a-1",
+    title: "Annual Community Picnic Postponement",
+    content: "Please note that the Annual Volunteer Appreciation Picnic is shifted from Saturday to Sunday due to the thunderstorm forecast. Same location and time!",
+    date: "2026-07-12",
+    sender: "Director Marcus",
+    category: "update"
+  },
+  {
+    id: "a-2",
+    title: "Urgent: Food Bank Shift Extra Hands Needed",
+    content: "Our Food Distribution center received a double shipment of fresh produce today. We urgently need 4 more volunteers tomorrow morning to ensure nothing spoils!",
+    date: "2026-07-12",
+    sender: "Director Marcus",
+    category: "urgent"
+  },
+  {
+    id: "a-3",
+    title: "Community Service Milestone! 1000+ Hours Reach",
+    content: "Together, our registered volunteers have completed over 1,000 service hours in 2026! Thank you to every helper. You are making a wonderful difference.",
+    date: "2026-07-01",
+    sender: "Volunteer Board",
+    category: "general"
+  }
+];
+
+export const INITIAL_FEEDBACK: CommunityFeedback[] = [
+  {
+    id: "f-1",
+    userEmail: "volunteer3@example.com",
+    userName: "Alex Johnson",
+    userAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150",
+    eventId: "e-4",
+    eventTitle: "Paws & Play Shelter Dog Support",
+    rating: 5,
+    comment: "This was an incredible experience. The shelter staff were so welcoming and organized. Can't wait to go back and walk more dogs!",
+    date: "2026-07-11"
+  },
+  {
+    id: "f-2",
+    userEmail: "manalmer2004@gmail.com",
+    userName: "Manal Mer",
+    userAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150",
+    eventId: "e-6",
+    eventTitle: "After-School Creative Tutoring",
+    rating: 5,
+    comment: "The children were extremely bright and full of energy. Seeing them understand fractions after struggling was a wonderful feeling.",
+    date: "2026-07-09"
+  }
+];
