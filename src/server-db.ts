@@ -273,6 +273,23 @@ export const db = {
     }
   },
 
+  async getAllUsers(): Promise<UserProfile[]> {
+    await connectDb();
+    if (useFirebase) {
+      const snapshot = await firestoreDb.collection(COLLECTIONS.users).get();
+      return snapshot.docs.map(d => {
+        const { passwordHash, ...profile } = d.data() as DbUser;
+        return profile;
+      });
+    } else {
+      const data = loadFileDb();
+      return data.users.map(u => {
+        const { passwordHash, ...profile } = u;
+        return profile;
+      });
+    }
+  },
+
   // Events
   async getEvents(): Promise<ServiceEvent[]> {
     await connectDb();

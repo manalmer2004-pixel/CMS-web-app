@@ -14,11 +14,12 @@ import {
   Calendar,
   Image as ImageIcon
 } from "lucide-react";
-import { ServiceEvent, HoursLog, EventCategory } from "../types";
+import { ServiceEvent, HoursLog, EventCategory, UserProfile } from "../types";
 
 interface OrganizerConsoleProps {
   events: ServiceEvent[];
   logs: HoursLog[];
+  users: UserProfile[];
   onApproveLog: (logId: string, notes: string) => void;
   onRejectLog: (logId: string, notes: string) => void;
   onAddEvent: (event: Omit<ServiceEvent, "id" | "signedUpVolunteers" | "completed">) => void;
@@ -37,6 +38,7 @@ const CATEGORIES: EventCategory[] = [
 export default function OrganizerConsole({ 
   events, 
   logs, 
+  users,
   onApproveLog, 
   onRejectLog, 
   onAddEvent 
@@ -69,7 +71,13 @@ export default function OrganizerConsole({
     .filter(log => log.status === "approved")
     .reduce((sum, log) => sum + log.hours, 0);
 
-  const activeVolunteersCount = new Set(logs.map(log => log.userEmail)).size;
+  // Real registered volunteers (not just people who've logged hours) —
+  // this updates the moment someone signs up, with zero hours until they log some.
+  const registeredVolunteers = users
+    .filter(u => u.role === "volunteer")
+    .sort((a, b) => b.totalHours - a.totalHours);
+
+  const activeVolunteersCount = registeredVolunteers.length;
 
   const handleNotesChange = (logId: string, text: string) => {
     setVerificationNotes(prev => ({ ...prev, [logId]: text }));
@@ -175,7 +183,7 @@ export default function OrganizerConsole({
             </div>
             
             <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-3xs">
-              <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Volunteers Retained</span>
+              <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Registered Volunteers</span>
               <div className="flex items-center gap-2 mt-2">
                 <Users className="h-5 w-5 text-blue-600" />
                 <span className="font-display text-2xl font-bold text-slate-800">{activeVolunteersCount}</span>
@@ -238,22 +246,26 @@ export default function OrganizerConsole({
 
             <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-3xs space-y-3">
               <h3 className="font-display text-sm font-bold text-slate-800">Registered Community Volunteers</h3>
-              <p className="text-[11px] text-slate-400">List of all active accounts delivering service</p>
+              <p className="text-[11px] text-slate-400">Live list of every volunteer account, most active hours first</p>
               
-              <div className="divide-y divide-slate-100 pt-2 text-xs">
-                {[
-                  { name: "Manal Mer", email: "manalmer2004@gmail.com", hours: totalHoursDelivered, role: "Volunteer" }
-                ].map((vol) => (
-                  <div key={vol.email} className="flex items-center justify-between py-2.5">
-                    <div>
-                      <span className="font-bold text-slate-800 block">{vol.name}</span>
-                      <span className="text-[10px] text-slate-400">{vol.email}</span>
+              <div className="divide-y divide-slate-100 pt-2 text-xs max-h-72 overflow-y-auto">
+                {registeredVolunteers.length === 0 ? (
+                  <p className="text-slate-400 italic py-6 text-center">
+                    No volunteers have registered yet.
+                  </p>
+                ) : (
+                  registeredVolunteers.map((vol) => (
+                    <div key={vol.email} className="flex items-center justify-between py-2.5">
+                      <div>
+                        <span className="font-bold text-slate-800 block">{vol.name}</span>
+                        <span className="text-[10px] text-slate-400">{vol.email}</span>
+                      </div>
+                      <span className="font-mono bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded text-[11px]">
+                        {vol.totalHours}h
+                      </span>
                     </div>
-                    <span className="font-mono bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded text-[11px]">
-                      {vol.hours}h
-                    </span>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>

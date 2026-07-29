@@ -207,6 +207,20 @@ app.put("/api/user/profile", authenticateToken, async (req, res) => {
 
 
 // -----------------------------------------------------------------------------
+// USER DIRECTORY (Coordinator Only)
+// -----------------------------------------------------------------------------
+app.get("/api/users", authenticateToken, requireCoordinator, async (req, res) => {
+  try {
+    const users = await db.getAllUsers();
+    res.json(users);
+  } catch (error: any) {
+    console.error("Get users error:", error);
+    res.status(500).json({ error: "Server error retrieving volunteer directory" });
+  }
+});
+
+
+// -----------------------------------------------------------------------------
 // EVENTS ENDPOINTS
 // -----------------------------------------------------------------------------
 

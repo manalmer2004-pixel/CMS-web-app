@@ -54,6 +54,7 @@ export default function App() {
   const [logs, setLogs] = useState<HoursLog[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [feedbacks, setFeedbacks] = useState<CommunityFeedback[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
 
   // Current selected view/tab
   const [activeTab, setActiveTab] = useState<string>("dashboard");
@@ -166,6 +167,12 @@ export default function App() {
     apiFetch("/api/feedbacks")
       .then(data => setFeedbacks(data))
       .catch(err => showToast(`Failed to sync experience feedback: ${err.message}`, "error"));
+
+    if (user.role === "coordinator") {
+      apiFetch("/api/users")
+        .then(data => setUsers(data))
+        .catch(err => showToast(`Failed to sync volunteer directory: ${err.message}`, "error"));
+    }
   };
 
   useEffect(() => {
@@ -232,6 +239,7 @@ export default function App() {
     setLogs([]);
     setAnnouncements([]);
     setFeedbacks([]);
+    setUsers([]);
     showToast("Logged out successfully. See you soon!", "info");
   };
 
@@ -676,35 +684,7 @@ export default function App() {
               </button>
             </div>
 
-            {/* Preset Demo Credentials Box */}
-            <div className="mt-6 bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2.5">
-              <div className="flex items-center gap-1.5 text-slate-500">
-                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                <span className="text-[10px] uppercase font-mono font-bold tracking-wider leading-none">Sandbox Demo Logins</span>
-              </div>
-              <p className="text-[10px] text-slate-400 font-medium leading-normal">
-                Click a preset account below to log in instantly with seeded MongoDB database data:
-              </p>
-              
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <button
-                  onClick={() => handleDemoLogin("manalmer2004@gmail.com")}
-                  disabled={isSubmittingAuth}
-                  className="bg-white hover:bg-emerald-50 border border-slate-200/60 hover:border-emerald-200 text-slate-700 hover:text-emerald-800 text-[10px] font-bold py-2 px-2.5 rounded-lg text-left cursor-pointer transition flex flex-col gap-0.5 shadow-3xs"
-                >
-                  <span className="text-[8px] uppercase tracking-wider text-slate-400">VOLUNTEER</span>
-                  <span className="truncate">Manal Mer</span>
-                </button>
-                <button
-                  onClick={() => handleDemoLogin("marcus.director@community.org")}
-                  disabled={isSubmittingAuth}
-                  className="bg-white hover:bg-emerald-50 border border-slate-200/60 hover:border-emerald-200 text-slate-700 hover:text-emerald-800 text-[10px] font-bold py-2 px-2.5 rounded-lg text-left cursor-pointer transition flex flex-col gap-0.5 shadow-3xs"
-                >
-                  <span className="text-[8px] uppercase tracking-wider text-slate-400">COORDINATOR</span>
-                  <span className="truncate">Director Marcus</span>
-                </button>
-              </div>
-            </div>
+            {/* Demo logins removed — seeded accounts hidden in production UI */}
 
           </div>
         </div>
@@ -970,6 +950,7 @@ export default function App() {
           <OrganizerConsole 
             events={events} 
             logs={logs} 
+            users={users}
             onApproveLog={handleApproveLog} 
             onRejectLog={handleRejectLog} 
             onAddEvent={handleAddEvent} 
