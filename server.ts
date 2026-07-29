@@ -89,9 +89,9 @@ app.post("/api/auth/signup", async (req, res) => {
     const newUserProfile = {
       name,
       email: cleanEmail,
-      avatar: isCoord 
-        ? "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=250"
-        : `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 500000)}?auto=format&fit=crop&q=80&w=250`,
+      avatar: isCoord
+        ? "https://ui-avatars.com/api/?name=CO&length=2&rounded=true&background=10b981&color=ffffff&size=250&bold=true"
+        : "https://ui-avatars.com/api/?name=VO&length=2&rounded=true&background=10b981&color=ffffff&size=250&bold=true",
       role: (role === "coordinator" ? "coordinator" : "volunteer") as UserRole,
       phone: phone || "",
       skills: skills || [],

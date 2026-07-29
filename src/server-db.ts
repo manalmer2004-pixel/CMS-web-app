@@ -1,26 +1,20 @@
-import mongoose from "mongoose";
+import * as admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
+import type { Firestore, QueryDocumentSnapshot } from "@google-cloud/firestore";
 import fs from "fs";
 import path from "path";
 import bcrypt from "bcryptjs";
 import { UserProfile, ServiceEvent, HoursLog, Announcement, CommunityFeedback } from "./types";
 
 // Seed data imports
-import { 
-  INITIAL_USER, 
-  INITIAL_COORDINATOR, 
-  INITIAL_EVENTS, 
-  INITIAL_HOURS_LOGS, 
-  INITIAL_ANNOUNCEMENTS, 
-  INITIAL_FEEDBACK 
+import {
+  INITIAL_USER,
+  INITIAL_COORDINATOR,
+  INITIAL_EVENTS,
+  INITIAL_HOURS_LOGS,
+  INITIAL_ANNOUNCEMENTS,
+  INITIAL_FEEDBACK
 } from "./data";
-
-const isProduction = process.env.NODE_ENV === "production";
-let MONGO_URI = process.env.MONGODB_URI;
-
-// Automatically correct common connection string typo
-if (MONGO_URI && MONGO_URI.startsWith("mongodb+serif://")) {
-  MONGO_URI = MONGO_URI.replace("mongodb+serif://", "mongodb+srv://");
-}
 
 // Path to file fallback DB
 const JSON_DB_DIR = path.join(process.cwd(), "data");
@@ -32,96 +26,7 @@ export interface DbUser extends UserProfile {
 }
 
 // -----------------------------------------------------------------------------
-// 1. MONGOOSE SCHEMA & MODEL DEFINITIONS (For real MongoDB)
-// -----------------------------------------------------------------------------
-const UserSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  passwordHash: { type: String, required: true },
-  avatar: { type: String, default: "" },
-  role: { type: String, enum: ["volunteer", "coordinator"], default: "volunteer" },
-  phone: { type: String, default: "" },
-  skills: { type: [String], default: [] },
-  bio: { type: String, default: "" },
-  emergencyContact: { type: String, default: "" },
-  joinedDate: { type: String, default: "" },
-  totalHours: { type: Number, default: 0 },
-  completedEventsCount: { type: Number, default: 0 },
-  level: { type: Number, default: 1 },
-  badgeIds: { type: [String], default: [] }
-});
-
-const EventSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  category: { type: String, required: true },
-  date: { type: String, required: true },
-  startTime: { type: String, required: true },
-  endTime: { type: String, required: true },
-  location: { type: String, required: true },
-  maxVolunteers: { type: Number, required: true },
-  signedUpVolunteers: { type: [String], default: [] }, // emails
-  completed: { type: Boolean, default: false },
-  organizerEmail: { type: String, required: true },
-  image: { type: String, default: "" },
-  impactMetric: { type: String, default: "" }
-});
-
-const HoursLogSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  userEmail: { type: String, required: true },
-  userName: { type: String, required: true },
-  eventId: { type: String, required: true },
-  eventTitle: { type: String, required: true },
-  date: { type: String, required: true },
-  hours: { type: Number, required: true },
-  reflection: { type: String, default: "" },
-  supervisorEmail: { type: String, required: true },
-  status: { type: String, enum: ["pending", "approved", "rejected"], default: "pending" },
-  dateLogged: { type: String, required: true },
-  notes: { type: String, default: "" }
-});
-
-const AnnouncementSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  title: { type: String, required: true },
-  content: { type: String, required: true },
-  date: { type: String, required: true },
-  sender: { type: String, required: true },
-  category: { type: String, enum: ["urgent", "general", "update"], default: "general" }
-});
-
-const FeedbackSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  userEmail: { type: String, required: true },
-  userName: { type: String, required: true },
-  userAvatar: { type: String, default: "" },
-  eventId: { type: String, required: true },
-  eventTitle: { type: String, required: true },
-  rating: { type: Number, required: true, min: 1, max: 5 },
-  comment: { type: String, required: true },
-  date: { type: String, required: true }
-});
-
-// Lazy-loaded Mongoose models
-let MongoUser: mongoose.Model<any>;
-let MongoEvent: mongoose.Model<any>;
-let MongoHoursLog: mongoose.Model<any>;
-let MongoAnnouncement: mongoose.Model<any>;
-let MongoFeedback: mongoose.Model<any>;
-
-function initMongoModels() {
-  MongoUser = mongoose.models.User || mongoose.model("User", UserSchema);
-  MongoEvent = mongoose.models.Event || mongoose.model("Event", EventSchema);
-  MongoHoursLog = mongoose.models.HoursLog || mongoose.model("HoursLog", HoursLogSchema);
-  MongoAnnouncement = mongoose.models.Announcement || mongoose.model("Announcement", AnnouncementSchema);
-  MongoFeedback = mongoose.models.Feedback || mongoose.model("Feedback", FeedbackSchema);
-}
-
-// -----------------------------------------------------------------------------
-// 2. FILE DB IMPLEMENTATION (FALLBACK SYSTEM)
+// 1. FILE DB IMPLEMENTATION (FALLBACK SYSTEM) — unchanged from the Mongo version
 // -----------------------------------------------------------------------------
 interface FileDbData {
   users: DbUser[];
@@ -137,19 +42,12 @@ function loadFileDb(): FileDbData {
   }
 
   if (!fs.existsSync(JSON_DB_PATH)) {
-    // Generate default passwords hashed for initial users
     const salt = bcrypt.genSaltSync(10);
     const defaultPasswordHash = bcrypt.hashSync("password123", salt);
 
     const initialUsers: DbUser[] = [
-      {
-        ...INITIAL_USER,
-        passwordHash: defaultPasswordHash
-      },
-      {
-        ...INITIAL_COORDINATOR,
-        passwordHash: defaultPasswordHash
-      }
+      { ...INITIAL_USER, passwordHash: defaultPasswordHash },
+      { ...INITIAL_COORDINATOR, passwordHash: defaultPasswordHash }
     ];
 
     const initialData: FileDbData = {
@@ -181,84 +79,96 @@ function saveFileDb(data: FileDbData) {
 }
 
 // -----------------------------------------------------------------------------
-// 3. DATABASE CONNECTION & SEED ENGINE
+// 2. FIRESTORE CONNECTION & SEED ENGINE
 // -----------------------------------------------------------------------------
 let isDbConnected = false;
-let useMongo = false;
+let useFirebase = false;
+let firestoreDb: Firestore;
+
+const COLLECTIONS = {
+  users: "users",
+  events: "events",
+  logs: "hoursLogs",
+  announcements: "announcements",
+  feedbacks: "feedbacks"
+};
 
 export async function connectDb() {
-  if (isDbConnected) return useMongo;
+  if (isDbConnected) return useFirebase;
 
-  if (MONGO_URI && MONGO_URI !== "MY_MONGODB_URI" && !MONGO_URI.includes("username:password")) {
+  const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const hasCredentialsFile = !!credentialsPath && fs.existsSync(path.resolve(credentialsPath));
+
+  if (hasCredentialsFile) {
     try {
-      console.log("Connecting to MongoDB via Mongoose...");
-      await mongoose.connect(MONGO_URI);
-      initMongoModels();
-      useMongo = true;
+      console.log("Connecting to Firebase Firestore...");
+      if (!admin.getApps().length) {
+        admin.initializeApp({
+          credential: admin.applicationDefault(),
+          projectId: process.env.FIREBASE_PROJECT_ID
+        });
+      }
+      firestoreDb = getFirestore();
+      useFirebase = true;
       isDbConnected = true;
-      console.log("MongoDB connection established successfully!");
-      
-      // Seed MongoDB if users collection is empty
-      const userCount = await MongoUser.countDocuments();
-      if (userCount === 0) {
-        console.log("MongoDB is empty. Seeding initial records...");
+      console.log("Firebase Firestore connection established successfully!");
+
+      // Seed Firestore if the users collection is empty
+      const usersSnapshot = await firestoreDb.collection(COLLECTIONS.users).limit(1).get();
+      if (usersSnapshot.empty) {
+        console.log("Firestore is empty. Seeding initial records...");
         const salt = await bcrypt.genSalt(10);
         const defaultPasswordHash = await bcrypt.hash("password123", salt);
 
-        await MongoUser.create({
-          ...INITIAL_USER,
-          passwordHash: defaultPasswordHash
-        });
+        const batch = firestoreDb.batch();
 
-        await MongoUser.create({
-          ...INITIAL_COORDINATOR,
-          passwordHash: defaultPasswordHash
-        });
+        const user1: DbUser = { ...INITIAL_USER, passwordHash: defaultPasswordHash };
+        batch.set(firestoreDb.collection(COLLECTIONS.users).doc(user1.id), user1);
 
-        await MongoEvent.insertMany(INITIAL_EVENTS);
-        await MongoHoursLog.insertMany(INITIAL_HOURS_LOGS);
-        await MongoAnnouncement.insertMany(INITIAL_ANNOUNCEMENTS);
-        await MongoFeedback.insertMany(INITIAL_FEEDBACK);
-        
-        console.log("MongoDB database seeded successfully!");
+        const user2: DbUser = { ...INITIAL_COORDINATOR, passwordHash: defaultPasswordHash };
+        batch.set(firestoreDb.collection(COLLECTIONS.users).doc(user2.id), user2);
+
+        INITIAL_EVENTS.forEach(ev => batch.set(firestoreDb.collection(COLLECTIONS.events).doc(ev.id), ev));
+        INITIAL_HOURS_LOGS.forEach(log => batch.set(firestoreDb.collection(COLLECTIONS.logs).doc(log.id), log));
+        INITIAL_ANNOUNCEMENTS.forEach(a => batch.set(firestoreDb.collection(COLLECTIONS.announcements).doc(a.id), a));
+        INITIAL_FEEDBACK.forEach(f => batch.set(firestoreDb.collection(COLLECTIONS.feedbacks).doc(f.id), f));
+
+        await batch.commit();
+        console.log("Firestore database seeded successfully!");
       }
     } catch (err) {
-      console.error("Failed to connect to MongoDB, falling back to JSON local file storage.", err);
-      useMongo = false;
+      console.error("Failed to connect to Firebase, falling back to JSON local file storage.", err);
+      useFirebase = false;
       isDbConnected = true;
-      loadFileDb(); // trigger creation of local file
+      loadFileDb();
     }
   } else {
-    console.log("No valid MONGODB_URI environment variable detected.");
+    console.log("No valid GOOGLE_APPLICATION_CREDENTIALS file detected.");
     console.log("Initializing persistent JSON database fallback at:", JSON_DB_PATH);
-    useMongo = false;
+    useFirebase = false;
     isDbConnected = true;
-    loadFileDb(); // trigger creation of local file
+    loadFileDb();
   }
 
-  return useMongo;
-}
-
-// Helper to convert Mongo document into clean JSON object
-function cleanDoc(doc: any) {
-  if (!doc) return null;
-  const obj = doc.toObject ? doc.toObject() : doc;
-  delete obj._id;
-  delete obj.__v;
-  return obj;
+  return useFirebase;
 }
 
 // -----------------------------------------------------------------------------
-// 4. COMBINED SERVICE DRIVER METHODS
+// 3. COMBINED SERVICE DRIVER METHODS
 // -----------------------------------------------------------------------------
 export const db = {
   // Users
   async findUserByEmail(email: string): Promise<DbUser | null> {
     await connectDb();
     const cleanEmail = email.toLowerCase().trim();
-    if (useMongo) {
-      const user = await MongoUser.findOne({ email: new RegExp(`^${cleanEmail}$`, "i") });
-      return user ? cleanDoc(user) as DbUser : null;
+    if (useFirebase) {
+      const snapshot = await firestoreDb
+        .collection(COLLECTIONS.users)
+        .where("email", "==", cleanEmail)
+        .limit(1)
+        .get();
+      if (snapshot.empty) return null;
+      return snapshot.docs[0].data() as DbUser;
     } else {
       const data = loadFileDb();
       const user = data.users.find(u => u.email.toLowerCase() === cleanEmail);
@@ -275,9 +185,9 @@ export const db = {
       email: user.email.toLowerCase().trim()
     };
 
-    if (useMongo) {
-      const doc = await MongoUser.create(newUser);
-      return cleanDoc(doc) as DbUser;
+    if (useFirebase) {
+      await firestoreDb.collection(COLLECTIONS.users).doc(id).set(newUser);
+      return newUser;
     } else {
       const data = loadFileDb();
       data.users.push(newUser);
@@ -289,15 +199,20 @@ export const db = {
   async updateUser(email: string, updates: Partial<UserProfile>): Promise<UserProfile | null> {
     await connectDb();
     const cleanEmail = email.toLowerCase().trim();
-    if (useMongo) {
-      // Don't allow changing role or email for safety here
-      const { email: _, role: __, id: ___, ...allowedUpdates } = updates;
-      const doc = await MongoUser.findOneAndUpdate(
-        { email: new RegExp(`^${cleanEmail}$`, "i") },
-        { $set: allowedUpdates },
-        { new: true }
-      );
-      return doc ? cleanDoc(doc) as UserProfile : null;
+    const { email: _e, role: _r, id: _id, ...allowedUpdates } = updates;
+
+    if (useFirebase) {
+      const snapshot = await firestoreDb
+        .collection(COLLECTIONS.users)
+        .where("email", "==", cleanEmail)
+        .limit(1)
+        .get();
+      if (snapshot.empty) return null;
+      const docRef = snapshot.docs[0].ref;
+      await docRef.update(allowedUpdates as Record<string, unknown>);
+      const updatedDoc = await docRef.get();
+      const { passwordHash: _p, ...profile } = updatedDoc.data() as DbUser;
+      return profile;
     } else {
       const data = loadFileDb();
       const idx = data.users.findIndex(u => u.email.toLowerCase() === cleanEmail);
@@ -306,7 +221,6 @@ export const db = {
       const updatedUser = {
         ...data.users[idx],
         ...updates,
-        // protect keys
         id: data.users[idx].id,
         email: data.users[idx].email,
         role: data.users[idx].role
@@ -314,29 +228,35 @@ export const db = {
 
       data.users[idx] = updatedUser;
       saveFileDb(data);
-      
-      const { passwordHash: _, ...profile } = updatedUser;
+
+      const { passwordHash: _p, ...profile } = updatedUser;
       return profile;
     }
   },
 
-  async updateUserStats(email: string, hours: number, eventsCount: number, level: number, badgeIds: string[]): Promise<UserProfile | null> {
+  async updateUserStats(
+    email: string,
+    hours: number,
+    eventsCount: number,
+    level: number,
+    badgeIds: string[]
+  ): Promise<UserProfile | null> {
     await connectDb();
     const cleanEmail = email.toLowerCase().trim();
-    if (useMongo) {
-      const doc = await MongoUser.findOneAndUpdate(
-        { email: new RegExp(`^${cleanEmail}$`, "i") },
-        { 
-          $set: { 
-            totalHours: hours, 
-            completedEventsCount: eventsCount, 
-            level, 
-            badgeIds 
-          } 
-        },
-        { new: true }
-      );
-      return doc ? cleanDoc(doc) as UserProfile : null;
+    const updates = { totalHours: hours, completedEventsCount: eventsCount, level, badgeIds };
+
+    if (useFirebase) {
+      const snapshot = await firestoreDb
+        .collection(COLLECTIONS.users)
+        .where("email", "==", cleanEmail)
+        .limit(1)
+        .get();
+      if (snapshot.empty) return null;
+      const docRef = snapshot.docs[0].ref;
+      await docRef.update(updates);
+      const updatedDoc = await docRef.get();
+      const { passwordHash: _p, ...profile } = updatedDoc.data() as DbUser;
+      return profile;
     } else {
       const data = loadFileDb();
       const idx = data.users.findIndex(u => u.email.toLowerCase() === cleanEmail);
@@ -346,9 +266,9 @@ export const db = {
       data.users[idx].completedEventsCount = eventsCount;
       data.users[idx].level = level;
       data.users[idx].badgeIds = badgeIds;
-      
+
       saveFileDb(data);
-      const { passwordHash: _, ...profile } = data.users[idx];
+      const { passwordHash: _p, ...profile } = data.users[idx];
       return profile;
     }
   },
@@ -356,16 +276,19 @@ export const db = {
   // Events
   async getEvents(): Promise<ServiceEvent[]> {
     await connectDb();
-    if (useMongo) {
-      const list = await MongoEvent.find({}).sort({ date: -1 });
-      return list.map(cleanDoc) as ServiceEvent[];
+    if (useFirebase) {
+      const snapshot = await firestoreDb.collection(COLLECTIONS.events).get();
+      const events: ServiceEvent[] = snapshot.docs.map((d: QueryDocumentSnapshot) => d.data() as ServiceEvent);
+      return events.sort((a, b) => b.date.localeCompare(a.date));
     } else {
       const data = loadFileDb();
       return [...data.events].sort((a, b) => b.date.localeCompare(a.date));
     }
   },
 
-  async createEvent(event: Omit<ServiceEvent, "id" | "signedUpVolunteers" | "completed">): Promise<ServiceEvent> {
+  async createEvent(
+    event: Omit<ServiceEvent, "id" | "signedUpVolunteers" | "completed">
+  ): Promise<ServiceEvent> {
     await connectDb();
     const id = `e-${Date.now()}`;
     const newEvent: ServiceEvent = {
@@ -375,9 +298,9 @@ export const db = {
       completed: false
     };
 
-    if (useMongo) {
-      const doc = await MongoEvent.create(newEvent);
-      return cleanDoc(doc) as ServiceEvent;
+    if (useFirebase) {
+      await firestoreDb.collection(COLLECTIONS.events).doc(id).set(newEvent);
+      return newEvent;
     } else {
       const data = loadFileDb();
       data.events.push(newEvent);
@@ -389,21 +312,27 @@ export const db = {
   async toggleSignUp(eventId: string, email: string): Promise<ServiceEvent | null> {
     await connectDb();
     const cleanEmail = email.toLowerCase().trim();
-    if (useMongo) {
-      const event = await MongoEvent.findOne({ id: eventId });
-      if (!event) return null;
 
-      const isSignedUp = event.signedUpVolunteers.includes(cleanEmail);
+    if (useFirebase) {
+      const docRef = firestoreDb.collection(COLLECTIONS.events).doc(eventId);
+      const doc = await docRef.get();
+      if (!doc.exists) return null;
+
+      const event = doc.data() as ServiceEvent;
+      const isSignedUp = event.signedUpVolunteers.some(e => e.toLowerCase() === cleanEmail);
+
+      let updatedVolunteers: string[];
       if (isSignedUp) {
-        event.signedUpVolunteers = event.signedUpVolunteers.filter((e: string) => e !== cleanEmail);
+        updatedVolunteers = event.signedUpVolunteers.filter(e => e.toLowerCase() !== cleanEmail);
       } else {
         if (event.signedUpVolunteers.length >= event.maxVolunteers) {
           throw new Error("Initiative capacity full");
         }
-        event.signedUpVolunteers.push(cleanEmail);
+        updatedVolunteers = [...event.signedUpVolunteers, cleanEmail];
       }
-      await event.save();
-      return cleanDoc(event) as ServiceEvent;
+
+      await docRef.update({ signedUpVolunteers: updatedVolunteers });
+      return { ...event, signedUpVolunteers: updatedVolunteers };
     } else {
       const data = loadFileDb();
       const idx = data.events.findIndex(e => e.id === eventId);
@@ -411,7 +340,7 @@ export const db = {
 
       const event = data.events[idx];
       const isSignedUp = event.signedUpVolunteers.some(e => e.toLowerCase() === cleanEmail);
-      
+
       if (isSignedUp) {
         event.signedUpVolunteers = event.signedUpVolunteers.filter(e => e.toLowerCase() !== cleanEmail);
       } else {
@@ -430,15 +359,21 @@ export const db = {
   // Hours Logs
   async getLogs(userEmail?: string): Promise<HoursLog[]> {
     await connectDb();
-    if (useMongo) {
-      const query = userEmail ? { userEmail: new RegExp(`^${userEmail.toLowerCase().trim()}$`, "i") } : {};
-      const list = await MongoHoursLog.find(query).sort({ dateLogged: -1 });
-      return list.map(cleanDoc) as HoursLog[];
+    if (useFirebase) {
+      const snapshot = await firestoreDb.collection(COLLECTIONS.logs).get();
+      let logs: HoursLog[] = snapshot.docs.map((d: QueryDocumentSnapshot) => d.data() as HoursLog);
+      if (userEmail) {
+        const clean = userEmail.toLowerCase().trim();
+        logs = logs.filter(l => l.userEmail.toLowerCase() === clean);
+      }
+      return logs.sort((a, b) => b.dateLogged.localeCompare(a.dateLogged));
     } else {
       const data = loadFileDb();
       if (userEmail) {
         const clean = userEmail.toLowerCase().trim();
-        return data.logs.filter(l => l.userEmail.toLowerCase() === clean).sort((a, b) => b.dateLogged.localeCompare(a.dateLogged));
+        return data.logs
+          .filter(l => l.userEmail.toLowerCase() === clean)
+          .sort((a, b) => b.dateLogged.localeCompare(a.dateLogged));
       }
       return [...data.logs].sort((a, b) => b.dateLogged.localeCompare(a.dateLogged));
     }
@@ -454,26 +389,32 @@ export const db = {
       dateLogged: new Date().toISOString().split("T")[0]
     };
 
-    if (useMongo) {
-      const doc = await MongoHoursLog.create(newLog);
-      return cleanDoc(doc) as HoursLog;
+    if (useFirebase) {
+      await firestoreDb.collection(COLLECTIONS.logs).doc(id).set(newLog);
+      return newLog;
     } else {
       const data = loadFileDb();
-      data.logs.unshift(newLog); // Prepend new logs
+      data.logs.unshift(newLog);
       saveFileDb(data);
       return newLog;
     }
   },
 
-  async updateLogStatus(logId: string, status: "approved" | "rejected", notes: string): Promise<HoursLog | null> {
+  async updateLogStatus(
+    logId: string,
+    status: "approved" | "rejected",
+    notes: string
+  ): Promise<HoursLog | null> {
     await connectDb();
-    if (useMongo) {
-      const doc = await MongoHoursLog.findOneAndUpdate(
-        { id: logId },
-        { $set: { status, notes } },
-        { new: true }
-      );
-      return doc ? cleanDoc(doc) as HoursLog : null;
+
+    if (useFirebase) {
+      const docRef = firestoreDb.collection(COLLECTIONS.logs).doc(logId);
+      const doc = await docRef.get();
+      if (!doc.exists) return null;
+
+      await docRef.update({ status, notes });
+      const updatedDoc = await docRef.get();
+      return updatedDoc.data() as HoursLog;
     } else {
       const data = loadFileDb();
       const idx = data.logs.findIndex(l => l.id === logId);
@@ -489,9 +430,10 @@ export const db = {
   // Announcements
   async getAnnouncements(): Promise<Announcement[]> {
     await connectDb();
-    if (useMongo) {
-      const list = await MongoAnnouncement.find({}).sort({ date: -1 });
-      return list.map(cleanDoc) as Announcement[];
+    if (useFirebase) {
+      const snapshot = await firestoreDb.collection(COLLECTIONS.announcements).get();
+      const announcements: Announcement[] = snapshot.docs.map((d: QueryDocumentSnapshot) => d.data() as Announcement);
+      return announcements.sort((a, b) => b.date.localeCompare(a.date));
     } else {
       const data = loadFileDb();
       return [...data.announcements].sort((a, b) => b.date.localeCompare(a.date));
@@ -501,14 +443,11 @@ export const db = {
   async createAnnouncement(ann: Omit<Announcement, "id">): Promise<Announcement> {
     await connectDb();
     const id = `a-${Date.now()}`;
-    const newAnn: Announcement = {
-      ...ann,
-      id
-    };
+    const newAnn: Announcement = { ...ann, id };
 
-    if (useMongo) {
-      const doc = await MongoAnnouncement.create(newAnn);
-      return cleanDoc(doc) as Announcement;
+    if (useFirebase) {
+      await firestoreDb.collection(COLLECTIONS.announcements).doc(id).set(newAnn);
+      return newAnn;
     } else {
       const data = loadFileDb();
       data.announcements.unshift(newAnn);
@@ -520,9 +459,10 @@ export const db = {
   // Feedback
   async getFeedbacks(): Promise<CommunityFeedback[]> {
     await connectDb();
-    if (useMongo) {
-      const list = await MongoFeedback.find({}).sort({ date: -1 });
-      return list.map(cleanDoc) as CommunityFeedback[];
+    if (useFirebase) {
+      const snapshot = await firestoreDb.collection(COLLECTIONS.feedbacks).get();
+      const feedbacks: CommunityFeedback[] = snapshot.docs.map((d: QueryDocumentSnapshot) => d.data() as CommunityFeedback);
+      return feedbacks.sort((a, b) => b.date.localeCompare(a.date));
     } else {
       const data = loadFileDb();
       return [...data.feedbacks].sort((a, b) => b.date.localeCompare(a.date));
@@ -532,14 +472,11 @@ export const db = {
   async createFeedback(feedback: Omit<CommunityFeedback, "id">): Promise<CommunityFeedback> {
     await connectDb();
     const id = `f-${Date.now()}`;
-    const newFeedback: CommunityFeedback = {
-      ...feedback,
-      id
-    };
+    const newFeedback: CommunityFeedback = { ...feedback, id };
 
-    if (useMongo) {
-      const doc = await MongoFeedback.create(newFeedback);
-      return cleanDoc(doc) as CommunityFeedback;
+    if (useFirebase) {
+      await firestoreDb.collection(COLLECTIONS.feedbacks).doc(id).set(newFeedback);
+      return newFeedback;
     } else {
       const data = loadFileDb();
       data.feedbacks.unshift(newFeedback);

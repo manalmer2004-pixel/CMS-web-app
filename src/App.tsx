@@ -981,13 +981,8 @@ export default function App() {
           MAIN APP FOOTER
           ----------------------------------------------------------------------- */}
       <footer className="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-400 font-semibold" id="app-footer">
-        <div className="mx-auto max-w-7xl px-4 md:px-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <span>ServiceHub © 2026. Made with love for community enrichment.</span>
-          <div className="flex gap-4 justify-center">
-            <a href="#" className="hover:text-slate-600 transition">Code of Conduct</a>
-            <a href="#" className="hover:text-slate-600 transition">Privacy Guidelines</a>
-            <a href="#" className="hover:text-slate-600 transition">Coordinator Help</a>
-          </div>
+        <div className="mx-auto max-w-7xl px-4 md:px-6">
+          <span className="block text-center">ServiceHub © 2026. Made with love for community enrichment.</span>
         </div>
       </footer>
 

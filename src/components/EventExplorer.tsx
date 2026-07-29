@@ -48,7 +48,7 @@ export default function EventExplorer({
 }: EventExplorerProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<"All" | EventCategory>("All");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "completed">("active");
   
   // Feedback form state
   const [reviewRating, setReviewRating] = useState(5);

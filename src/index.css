@@ -162,3 +162,10 @@ html.font-xl { font-size: 125%; }    /* ~20px base */
 .skip-to-content:focus {
   left: 0;
 }
+
+/* Fix: category badge pill keeps a white background in dark mode,
+   so force its text back to dark regardless of the global
+   text-slate-800 → light override above. */
+.dark .bg-white\/95.text-slate-800 {
+  color: #1e293b !important;
+}
