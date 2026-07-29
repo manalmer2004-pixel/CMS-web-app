@@ -53,14 +53,6 @@ Open `http://localhost:3000` in your browser.
 npm run build
 npm start
 ```
-
-## Seeded Demo Users
-
-The app includes seeded users when the local JSON database is created:
-
-- Volunteer: `manalmer2004@gmail.com` / `password123`
-- Coordinator: `marcus.director@community.org` / `password123`
-
 ## Notes
 
 - The server uses Express and Vite middleware in development.
