@@ -5,21 +5,17 @@ import {
   CheckCircle2, 
   Calendar, 
   Trophy, 
-  Bell, 
   Sparkles, 
   ArrowRight,
-  TrendingUp,
   MapPin,
-  Flame,
   Award
 } from "lucide-react";
-import { UserProfile, ServiceEvent, Badge, Announcement, HoursLog } from "../types";
+import { UserProfile, ServiceEvent, Badge, HoursLog } from "../types";
 import { ALL_BADGES } from "../data";
 
 interface DashboardProps {
   user: UserProfile;
   events: ServiceEvent[];
-  announcements: Announcement[];
   logs: HoursLog[];
   onTabChange: (tab: string) => void;
   onSelectEvent: (eventId: string) => void;
@@ -28,7 +24,6 @@ interface DashboardProps {
 export default function Dashboard({ 
   user, 
   events, 
-  announcements, 
   logs, 
   onTabChange,
   onSelectEvent
@@ -47,21 +42,7 @@ export default function Dashboard({
     .filter((l) => l.status === "pending")
     .reduce((sum, l) => sum + l.hours, 0);
 
-  // Level Progression Calculation (Level = floor(hours / 15) + 1, Max Level 10)
   const currentHours = totalApprovedHours;
-  const level = Math.floor(currentHours / 15) + 1;
-  const hoursInCurrentLevel = currentHours % 15;
-  const progressPercent = Math.min((hoursInCurrentLevel / 15) * 100, 100);
-  const hoursNeededForNext = Math.max(15 - hoursInCurrentLevel, 0);
-
-  // Mock leaderboard of other top volunteers
-  const leaderboard = [
-    { name: "Sophia Chen", hours: 48, level: 4, avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100", isCurrentUser: false },
-    { name: "Manal Mer", hours: totalApprovedHours, level: level, avatar: user.avatar, isCurrentUser: true },
-    { name: "Alex Johnson", hours: 24, level: 2, avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100", isCurrentUser: false },
-    { name: "Emily Rod", hours: 18, level: 2, avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100", isCurrentUser: false },
-    { name: "Carlos Diaz", hours: 15, level: 2, avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=100", isCurrentUser: false }
-  ].sort((a, b) => b.hours - a.hours);
 
   return (
     <div className="space-y-8" id="dashboard-container">
@@ -78,40 +59,38 @@ export default function Dashboard({
         
         <div className="relative z-10 grid gap-6 md:grid-cols-3 md:items-center">
           <div className="md:col-span-2 space-y-3">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/30 px-3 py-1 text-xs font-semibold tracking-wide backdrop-blur-xs">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/30 px-3 py-1 text-xs font-semibold tracking-wide backdrop-blur-xs text-white">
               <Sparkles className="h-3 w-3" />
               Community Champion
             </div>
-            <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
+            <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl text-white">
               Welcome Back, {user.name}!
             </h1>
-            <p className="text-emerald-50 text-sm max-w-xl leading-relaxed">
+            <p className="text-emerald-100 text-sm max-w-xl leading-relaxed">
               Every hour you give makes our community a stronger, warmer place. Your current active efforts are building local environmental beauty, supporting young scholars, and helping rescue pets.
             </p>
           </div>
           
           <div className="rounded-xl bg-white/10 p-5 backdrop-blur-md border border-white/10 space-y-3">
-            <div className="flex justify-between items-center text-xs text-emerald-100 font-semibold">
-              <span>LEVEL {level} PROGRESS</span>
-              <span>{currentHours} / {Math.floor(currentHours / 15 + 1) * 15} hours</span>
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-100">
+              <Sparkles className="h-3 w-3" />
+              Activity Snapshot
             </div>
-            
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-emerald-950/40">
-              <div 
-                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
-              />
+            <div>
+              <p className="text-sm font-semibold text-white">Your current impact</p>
+              <p className="mt-2 text-xs text-slate-200 leading-relaxed">
+                You’ve approved <strong>{totalApprovedHours} volunteer hours</strong> and joined <strong>{upcomingCommitments.length}</strong> active commitments toward community growth.
+              </p>
             </div>
-            
-            <p className="text-xs text-emerald-50 text-center">
-              💡 Just <strong className="font-semibold text-white">{hoursNeededForNext} more approved hours</strong> to reach Level {level + 1}!
-            </p>
+            <div className="rounded-2xl bg-slate-800/70 p-3 text-[11px] text-slate-200">
+              Keep up the momentum—your contributions are helping local initiatives thrive.
+            </div>
           </div>
         </div>
       </motion.div>
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4" id="stats-grid">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3" id="stats-grid">
         {[
           { 
             id: "stat-hours",
@@ -130,18 +109,10 @@ export default function Dashboard({
             color: "text-blue-600 bg-blue-50 border-blue-100" 
           },
           { 
-            id: "stat-commitments",
-            label: "Active Commitments", 
-            value: upcomingCommitments.length, 
-            subtitle: "Registered shifts",
-            icon: Calendar, 
-            color: "text-amber-600 bg-amber-50 border-amber-100" 
-          },
-          { 
-            id: "stat-rank",
-            label: "Community Rank", 
-            value: `#${leaderboard.findIndex(l => l.isCurrentUser) + 1}`, 
-            subtitle: "Out of 120 volunteers",
+            id: "stat-badges",
+            label: "Badges Earned", 
+            value: user.badgeIds.length, 
+            subtitle: "Achievements unlocked",
             icon: Trophy, 
             color: "text-rose-600 bg-rose-50 border-rose-100" 
           }
@@ -171,12 +142,10 @@ export default function Dashboard({
         })}
       </div>
 
-      <div className="grid gap-8 md:grid-cols-3" id="dashboard-main-content">
-        {/* Left Column: Schedule & Badges */}
-        <div className="md:col-span-2 space-y-8">
+      <div className="grid gap-8 md:grid-cols-2 items-stretch" id="dashboard-main-content">
           
           {/* Upcoming Shifts / Schedule */}
-          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs" id="upcoming-schedule-section">
+          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs h-full flex flex-col" id="upcoming-schedule-section">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="font-display text-lg font-bold text-slate-800">Your Volunteer Schedule</h2>
@@ -256,7 +225,7 @@ export default function Dashboard({
           </section>
 
           {/* Badges Accomplishment Wall */}
-          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs" id="badges-wall-section">
+          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs h-full flex flex-col" id="badges-wall-section">
             <div>
               <h2 className="font-display text-lg font-bold text-slate-800">Your Badge Cabinet</h2>
               <p className="text-xs text-slate-400">Unlock volunteer achievements by completing goals</p>
@@ -291,92 +260,6 @@ export default function Dashboard({
               })}
             </div>
           </section>
-        </div>
-
-        {/* Right Column: Announcements & Leaderboard */}
-        <div className="space-y-8">
-          
-          {/* Announcements Panel */}
-          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs" id="announcements-section">
-            <h2 className="font-display text-base font-bold text-slate-800 flex items-center gap-2">
-              <Bell className="h-4 w-4 text-emerald-600" /> Announcements
-            </h2>
-            
-            <div className="mt-4 space-y-3.5">
-              {announcements.map((ann) => (
-                <div 
-                  key={ann.id}
-                  className={`rounded-lg p-3.5 border text-xs leading-relaxed ${
-                    ann.category === "urgent" 
-                      ? "bg-red-50/50 border-red-100 text-red-950" 
-                      : ann.category === "update"
-                      ? "bg-amber-50/50 border-amber-100 text-amber-950"
-                      : "bg-slate-50/50 border-slate-100 text-slate-950"
-                  }`}
-                >
-                  <div className="flex items-center justify-between font-bold mb-1">
-                    <span className="uppercase text-[9px] tracking-wider px-1.5 py-0.5 rounded-sm bg-white border">
-                      {ann.category}
-                    </span>
-                    <span className="text-slate-400 text-[10px]">{ann.date}</span>
-                  </div>
-                  <h4 className="font-bold text-slate-800 mb-1">{ann.title}</h4>
-                  <p className="text-slate-600">{ann.content}</p>
-                  <p className="mt-1.5 text-[10px] text-slate-400 text-right">By {ann.sender}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Leaderboard Panel */}
-          <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs" id="leaderboard-section">
-            <h2 className="font-display text-base font-bold text-slate-800 flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-amber-500" /> Community Leaderboard
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">Top active volunteers this quarter</p>
-
-            <div className="mt-4 divide-y divide-slate-100">
-              {leaderboard.map((item, index) => (
-                <div 
-                  key={item.name}
-                  className={`flex items-center justify-between py-3 ${
-                    item.isCurrentUser ? "bg-emerald-50/40 rounded-lg px-2 -mx-2 my-1" : ""
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={`w-5 text-center text-xs font-bold ${
-                      index === 0 ? "text-amber-500" : index === 1 ? "text-slate-500" : index === 2 ? "text-amber-700" : "text-slate-400"
-                    }`}>
-                      {index + 1}
-                    </span>
-                    <img 
-                      src={item.avatar} 
-                      alt={item.name} 
-                      className="h-8 w-8 rounded-full object-cover border border-slate-100"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                        {item.name} 
-                        {item.isCurrentUser && <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1 py-0.1 rounded-sm">You</span>}
-                      </h4>
-                      <span className="text-[10px] text-slate-400 font-medium">Level {item.level}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="text-right">
-                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1 justify-end">
-                      <Flame className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                      {item.hours}h
-                    </span>
-                    <span className="text-[9px] text-slate-400 block">approved</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-        </div>
       </div>
     </div>
   );

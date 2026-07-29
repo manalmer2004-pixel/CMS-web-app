@@ -242,10 +242,7 @@ export default function OrganizerConsole({
               
               <div className="divide-y divide-slate-100 pt-2 text-xs">
                 {[
-                  { name: "Manal Mer", email: "manalmer2004@gmail.com", hours: totalHoursDelivered, role: "Volunteer" },
-                  { name: "Alex Johnson", email: "volunteer3@example.com", hours: 14, role: "Volunteer" },
-                  { name: "Sophia Chen", email: "sophia.chen@example.com", hours: 11, role: "Volunteer" },
-                  { name: "Emily Rodriguez", email: "emily.rod@example.com", hours: 6, role: "Volunteer" }
+                  { name: "Manal Mer", email: "manalmer2004@gmail.com", hours: totalHoursDelivered, role: "Volunteer" }
                 ].map((vol) => (
                   <div key={vol.email} className="flex items-center justify-between py-2.5">
                     <div>
@@ -320,7 +317,12 @@ export default function OrganizerConsole({
 
                   <div className="flex gap-2">
                     <button
-                      onClick={() => onRejectLog(log.id, verificationNotes[log.id] || "")}
+                      onClick={() => {
+                        const confirmed = window.confirm(
+                          `Reject ${log.hours} hours logged by ${log.userName} for "${log.eventTitle}"? They will not be credited for this time.`
+                        );
+                        if (confirmed) onRejectLog(log.id, verificationNotes[log.id] || "");
+                      }}
                       className="inline-flex items-center gap-1 text-xs font-semibold rounded-lg border border-red-200 text-red-600 hover:bg-red-50 px-4 py-2.5 transition"
                     >
                       <XCircle className="h-4 w-4" /> Reject

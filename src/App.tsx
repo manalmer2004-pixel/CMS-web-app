@@ -40,6 +40,7 @@ import EventExplorer from "./components/EventExplorer";
 import HoursLogger from "./components/HoursLogger";
 import OrganizerConsole from "./components/OrganizerConsole";
 import VolunteerProfile from "./components/VolunteerProfile";
+import AccessibilityPanel from "./components/AccessibilityPanel";
 
 export default function App() {
   // ---------------------------------------------------------------------------
@@ -262,6 +263,15 @@ export default function App() {
 
   // 1. Volunteer Register / Leave Event Handler
   const handleToggleSignUp = (eventId: string) => {
+    const targetEvent = events.find(e => e.id === eventId);
+    const isCurrentlySignedUp = targetEvent?.signedUpVolunteers.includes(user!.email);
+    if (isCurrentlySignedUp) {
+      const confirmed = window.confirm(
+        `Cancel your registration for "${targetEvent?.title}"? You can sign up again later if you change your mind.`
+      );
+      if (!confirmed) return;
+    }
+
     apiFetch(`/api/events/${eventId}/signup`, { method: "POST" })
       .then(updatedEvent => {
         setEvents(prev => prev.map(e => e.id === eventId ? updatedEvent : e));
@@ -447,24 +457,30 @@ export default function App() {
         <div className="flex-1 flex items-center justify-center p-6 md:p-12">
           <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200/80 p-8 shadow-md">
             
-            <div className="text-center md:text-left mb-6">
-              <div className="flex md:hidden justify-center items-center gap-2 mb-3">
-                <div className="rounded-lg bg-emerald-600 p-1.5 text-white">
-                  <Heart className="h-5 w-5 fill-white stroke-0" />
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between text-center md:text-left mb-6 gap-4">
+              <div>
+                <div className="flex md:hidden justify-center items-center gap-2 mb-3">
+                  <div className="rounded-lg bg-emerald-600 p-1.5 text-white">
+                    <Heart className="h-5 w-5 fill-white stroke-0" />
+                  </div>
+                  <span className="font-display text-sm font-extrabold text-slate-800">ServiceHub</span>
                 </div>
-                <span className="font-display text-sm font-extrabold text-slate-800">ServiceHub</span>
+                <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">
+                  {isSignUp ? "Create a service account" : "Welcome back to ServiceHub"}
+                </h2>
+                <p className="text-xs text-slate-400 font-medium mt-1">
+                  {isSignUp ? "Join as a helper or an organizer today" : "Sign in to track hours and join new volunteer initiatives"}
+                </p>
               </div>
-              <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">
-                {isSignUp ? "Create a service account" : "Welcome back to ServiceHub"}
-              </h2>
-              <p className="text-xs text-slate-400 font-medium mt-1">
-                {isSignUp ? "Join as a helper or an organizer today" : "Sign in to track hours and join new volunteer initiatives"}
-              </p>
+              <AccessibilityPanel />
             </div>
 
             {/* Custom Toast inside form */}
             {toastMessage && (
-              <div className={`mb-4 flex items-center gap-2.5 rounded-xl border p-3.5 text-xs font-bold leading-snug animate-fade-in ${
+              <div
+              role="status"
+              aria-live="polite"
+              className={`mb-4 flex items-center gap-2.5 rounded-xl border p-3.5 text-xs font-bold leading-snug animate-fade-in ${
                 toastMessage.type === "success" 
                   ? "bg-emerald-50 border-emerald-100 text-emerald-800" 
                   : toastMessage.type === "error"
@@ -699,12 +715,15 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between" id="app-viewport">
+      <a href="#main-content" className="skip-to-content">Skip to main content</a>
       
       {/* -----------------------------------------------------------------------
           TOP GLOBAL NOTIFICATION BAR / TOAST
           ----------------------------------------------------------------------- */}
       {toastMessage && (
         <div 
+          role="status"
+          aria-live="polite"
           className="fixed top-4 right-4 z-50 flex max-w-sm items-center gap-3 rounded-xl border p-4 shadow-lg animate-bounce duration-300 bg-white animate-fade-in"
           style={{
             borderColor: toastMessage.type === "success" ? "#bbf7d0" : toastMessage.type === "error" ? "#fecaca" : "#e2e8f0"
@@ -753,18 +772,18 @@ export default function App() {
       {/* -----------------------------------------------------------------------
           MAIN HEADER NAVIGATION BAR
           ----------------------------------------------------------------------- */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-3xs" id="app-main-navbar">
+      <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 shadow-3xs" id="app-main-navbar">
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <div className="flex h-16 items-center justify-between">
             
             {/* Brand Logo */}
             <div className="flex items-center gap-2">
-              <div className="rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 p-2 text-white">
+              <div className="rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-500 p-2 text-white">
                 <Heart className="h-5 w-5 fill-white stroke-0" />
               </div>
               <div>
-                <span className="font-display text-base font-extrabold tracking-tight text-slate-800">ServiceHub</span>
-                <span className="text-[10px] text-slate-400 block font-mono -mt-1 font-semibold">COMMUNITY COOPERATIVE</span>
+                <span className="font-display text-base font-extrabold tracking-tight text-white">ServiceHub</span>
+                <span className="text-[10px] text-slate-300 block font-mono -mt-1 font-semibold">COMMUNITY COOPERATIVE</span>
               </div>
             </div>
 
@@ -782,8 +801,8 @@ export default function App() {
                     }}
                     className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold tracking-wide transition ${
                       isActive 
-                        ? "bg-emerald-50 text-emerald-800 shadow-2xs border border-emerald-100/50" 
-                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                        ? "bg-emerald-500 text-slate-900 shadow-2xs border border-emerald-200" 
+                        : "text-slate-200 hover:bg-slate-800 hover:text-white"
                     }`}
                   >
                     <TabIcon className="h-4 w-4 shrink-0" />
@@ -796,9 +815,9 @@ export default function App() {
             {/* Desktop Right User Bubble */}
             <div className="hidden md:flex items-center gap-3">
               <div className="text-right">
-                <span className="text-xs font-bold text-slate-700 block leading-none">{user.name}</span>
-                <span className="text-[10px] text-slate-400 font-bold">
-                  {user.role === "coordinator" ? "Site Coordinator" : `LVL ${user.level} Volunteer`}
+                <span className="text-xs font-bold text-slate-100 block leading-none">{user.name}</span>
+                <span className="text-[10px] text-slate-300 font-bold">
+                  {user.role === "coordinator" ? "Site Coordinator" : "Volunteer"}
                 </span>
               </div>
               <button 
@@ -824,6 +843,7 @@ export default function App() {
                 )}
               </button>
 
+              <AccessibilityPanel />
               {/* Secure Log Out Icon */}
               <button
                 onClick={handleLogout}
@@ -907,12 +927,11 @@ export default function App() {
       {/* -----------------------------------------------------------------------
           MAIN APP CONTENT WORKSPACE AREA
           ----------------------------------------------------------------------- */}
-      <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 md:px-6" id="app-workspace-body">
+      <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 md:px-6" id="main-content">
         {activeTab === "dashboard" && currentRole === "volunteer" && (
           <Dashboard 
             user={user} 
             events={events} 
-            announcements={announcements} 
             logs={logs} 
             onTabChange={setActiveTab}
             onSelectEvent={handleSelectEventFromDashboard}

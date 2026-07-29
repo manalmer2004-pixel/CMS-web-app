@@ -94,7 +94,7 @@ export default function VolunteerProfile({ user, onUpdateProfile }: VolunteerPro
           <div>
             <h2 className="font-display text-lg font-bold text-slate-800">{user.name}</h2>
             <span className="inline-block mt-1 rounded-full bg-emerald-50 border border-emerald-100 px-3 py-0.5 text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
-              {user.role}
+              Volunteer
             </span>
           </div>
 

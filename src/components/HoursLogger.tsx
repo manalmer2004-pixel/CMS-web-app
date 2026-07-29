@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { 
   Clock, 
@@ -33,6 +33,34 @@ export default function HoursLogger({ logs, events, user, onSubmitLog }: HoursLo
   const [success, setSuccess] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState("");
+
+  const DRAFT_KEY = `hourslog_draft_${user.email}`;
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        if (draft.selectedEventId) setSelectedEventId(draft.selectedEventId);
+        if (draft.customEventTitle) setCustomEventTitle(draft.customEventTitle);
+        if (draft.reflection) setReflection(draft.reflection);
+      }
+    } catch {
+      // ignore malformed drafts
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!reflection.trim() && !customEventTitle.trim()) return;
+    try {
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ selectedEventId, customEventTitle, reflection })
+      );
+    } catch {
+      // localStorage unavailable — fail silently
+    }
+  }, [selectedEventId, customEventTitle, reflection]);
   const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending" | "rejected">("all");
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
@@ -102,6 +130,7 @@ export default function HoursLogger({ logs, events, user, onSubmitLog }: HoursLo
     setReflection("");
     setError("");
     setSuccess(true);
+    localStorage.removeItem(DRAFT_KEY);
     setTimeout(() => setSuccess(false), 3000);
   };
 

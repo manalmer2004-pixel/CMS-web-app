@@ -13,7 +13,7 @@
         "First Aid",
         "Graphic Design"
       ],
-      "bio": "Passionate about environment preservation, teaching kids, and lending a helping hand in the local animal shelters. Always eager to connect with like-minded community members!",
+      "bio": "Passionate about environment preservation, teaching kids, and lending a helping hand in the local animal shelters. ",
       "emergencyContact": "Sarah Mer (Mother) - +1 (555) 432-8700",
       "joinedDate": "2025-09-15",
       "totalHours": 39.5,
@@ -50,7 +50,7 @@
     {
       "name": "Jane Doe",
       "email": "manalmer786@gmail.com",
-      "avatar": "https://images.unsplash.com/photo-1500000425085?auto=format&fit=crop&q=80&w=250",
+      "avatar": "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0nMS4wJyBlbmNvZGluZz0ndXRmLTgnPz4KPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDFweCIgaGVpZ2h0PSI0MDFweCIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAzMTIuODA5IDAgNDAxIDQwMSIgdmVyc2lvbj0iMS4xIiB2aWV3Qm94PSIzMTIuODEgMCA0MDEgNDAxIj4gPGcgdHJhbnNmb3JtPSJtYXRyaXgoMS4yMjMgMCAwIDEuMjIzIC00NjcuNSAtODQzLjQ0KSI+IDxyZWN0IHg9IjYwMS40NSIgeT0iNjUzLjA3IiB3aWR0aD0iNDAxIiBoZWlnaHQ9IjQwMSIgZmlsbD0iI0U0RTZFNyIvPiA8cGF0aCBkPSJtODAyLjM4IDkwOC4wOGMtODQuNTE1IDAtMTUzLjUyIDQ4LjE4NS0xNTcuMzggMTA4LjYyaDMxNC43OWMtMy44Ny02MC40NC03Mi45LTEwOC42Mi0xNTcuNDEtMTA4LjYyeiIgZmlsbD0iI0FFQjRCNyIvPiA8cGF0aCBkPSJtODgxLjM3IDgxOC44NmMwIDQ2Ljc0Ni0zNS4xMDYgODQuNjQxLTc4LjQxIDg0LjY0MXMtNzguNDEtMzcuODk1LTc4LjQxLTg0LjY0MSAzNS4xMDYtODQuNjQxIDc4LjQxLTg0LjY0MWM0My4zMSAwIDc4LjQxIDM3LjkgNzguNDEgODQuNjR6IiBmaWxsPSIjQUVCNEI3Ii8+IDwvZz4gPC9zdmc+",
       "role": "volunteer",
       "phone": "+254 0712345678",
       "skills": [
@@ -59,7 +59,7 @@
         "plumbing"
       ],
       "bio": "hi",
-      "emergencyContact": "",
+      "emergencyContact": "+254 12345678",
       "joinedDate": "2026-07-15",
       "totalHours": 0,
       "completedEventsCount": 0,
